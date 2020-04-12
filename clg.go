@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"fmt"
 	"log"
 	"os"
@@ -9,6 +10,7 @@ import (
 )
 
 func main() {
+	var stdout, stderr bytes.Buffer
 	tag := "HEAD"
 
 	if len(os.Args) > 1 {
@@ -16,12 +18,15 @@ func main() {
 	}
 
 	cmd := exec.Command("git", "log", "--format=%h,%cI,%cn,%s,%b", tag)
+	cmd.Stdout = &stdout
+	cmd.Stderr = &stderr
 
-	out, err := cmd.CombinedOutput()
+	err := cmd.Run()
 	if err != nil {
-		log.Fatalf("git --log failed with %s\n", err)
+		log.Fatalf("git log failed with %s:\n>> %s", err, string(stderr.Bytes()))
 	}
-	fmt.Println(ExtractChangelog(string(out)))
+
+	fmt.Println(ExtractChangelog(string(stdout.Bytes())))
 }
 
 // ExtractChangelog extract changelog from logs
