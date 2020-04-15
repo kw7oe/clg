@@ -67,6 +67,7 @@ func ExtractChangelog(s string) string {
 
 func splitLog(log string) (string, string, string, string, string) {
 	info := strings.Split(log, ",")
+	fmt.Println(info)
 	return info[0], info[1], info[2], info[3], info[4]
 }
 
