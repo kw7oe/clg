@@ -17,7 +17,7 @@ func main() {
 		tag = os.Args[1]
 	}
 
-	cmd := exec.Command("git", "log", "--format=%h,%cI,%cn,%s,%b", tag)
+	cmd := exec.Command("git", "log", "--format=%h,%cI,%cn,%s,%b<!-- end -->", tag)
 	cmd.Stdout = &stdout
 	cmd.Stderr = &stderr
 
@@ -26,6 +26,7 @@ func main() {
 		log.Fatalf("git log failed with %s:\n>> %s", err, string(stderr.Bytes()))
 	}
 
+	// fmt.Printf(string(stdout.Bytes()))
 	fmt.Println(ExtractChangelog(string(stdout.Bytes())))
 }
 
@@ -33,11 +34,11 @@ func main() {
 func ExtractChangelog(s string) string {
 	var changes []string
 	var date string
-	logs := strings.Split(s, "\n")
+	logs := strings.Split(s, "<!-- end -->")
 
 	for index, log := range logs {
-		if log != "" {
-			_, extDate, author, subject, body := splitLog(log)
+		if trimLog := strings.TrimSuffix(log, "\n"); trimLog != "" {
+			_, extDate, author, subject, body := splitLog(trimLog)
 
 			if index == 0 {
 				date = extDate
@@ -67,14 +68,13 @@ func ExtractChangelog(s string) string {
 
 func splitLog(log string) (string, string, string, string, string) {
 	info := strings.Split(log, ",")
-	fmt.Println(info)
 	return info[0], info[1], info[2], info[3], info[4]
 }
 
 func extractTitle(body string) string {
 	info := strings.Split(body, "title: ")
-	if len(info) == 2 {
-		return info[1]
+	if len(info) >= 2 {
+		return strings.ReplaceAll(info[1], "\n", "")
 	}
 
 	return ""
